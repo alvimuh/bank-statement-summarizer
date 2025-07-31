@@ -1,6 +1,5 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
-const logger = require("../services/loggerService");
 
 const router = express.Router();
 
@@ -54,13 +53,11 @@ router.post(
 // Get recent logs for debugging
 router.get("/logs", async (req, res) => {
   try {
-    const lines = parseInt(req.query.lines) || 100;
-    const logs = await logger.getRecentLogs(lines);
-
     res.json({
       success: true,
-      logs: logs,
-      totalLines: logs.length,
+      message: "Logs endpoint disabled",
+      logs: [],
+      totalLines: 0,
     });
   } catch (error) {
     console.error("Log retrieval error:", error);
@@ -74,11 +71,9 @@ router.get("/logs", async (req, res) => {
 // Clear old log files
 router.post("/logs/cleanup", async (req, res) => {
   try {
-    await logger.cleanupOldLogs();
-
     res.json({
       success: true,
-      message: "Log cleanup completed",
+      message: "Log cleanup disabled",
     });
   } catch (error) {
     console.error("Log cleanup error:", error);

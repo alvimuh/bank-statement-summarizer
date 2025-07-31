@@ -1,5 +1,4 @@
 const moment = require("moment");
-const logger = require("./loggerService");
 
 class ExportService {
   constructor() {}
@@ -7,11 +6,6 @@ class ExportService {
   // Generate CSV content from analysis data
   async generateCSV(analysisData) {
     try {
-      await logger.info("Starting CSV generation", {
-        currency: analysisData.currency,
-        transactionCount: analysisData.allTransactions.length,
-      });
-
       const { summary, categories, allTransactions, currency } = analysisData;
 
       // CSV Headers
@@ -67,14 +61,8 @@ class ExportService {
         .map((row) => row.map((cell) => this.escapeCSV(cell)).join(","))
         .join("\n");
 
-      await logger.info("CSV generation completed", {
-        csvLength: csvContent.length,
-        rowCount: allRows.length,
-      });
-
       return csvContent;
     } catch (error) {
-      await logger.logError(error, { method: "generateCSV" });
       console.error("CSV generation failed:", error);
       throw new Error("Failed to generate CSV");
     }
@@ -83,11 +71,6 @@ class ExportService {
   // Generate a simplified CSV with just transactions
   async generateTransactionsCSV(analysisData) {
     try {
-      await logger.info("Starting transactions CSV generation", {
-        currency: analysisData.currency,
-        transactionCount: analysisData.allTransactions.length,
-      });
-
       const { allTransactions, currency } = analysisData;
 
       // CSV Headers
@@ -118,14 +101,8 @@ class ExportService {
         .map((row) => row.map((cell) => this.escapeCSV(cell)).join(","))
         .join("\n");
 
-      await logger.info("Transactions CSV generation completed", {
-        csvLength: csvContent.length,
-        rowCount: allRows.length,
-      });
-
       return csvContent;
     } catch (error) {
-      await logger.logError(error, { method: "generateTransactionsCSV" });
       console.error("CSV generation failed:", error);
       throw new Error("Failed to generate CSV");
     }
@@ -134,11 +111,6 @@ class ExportService {
   // Generate summary CSV
   async generateSummaryCSV(analysisData) {
     try {
-      await logger.info("Starting summary CSV generation", {
-        currency: analysisData.currency,
-        categoriesCount: Object.keys(analysisData.categories).length,
-      });
-
       const { summary, categories, currency } = analysisData;
 
       // Summary section
@@ -174,14 +146,8 @@ class ExportService {
         .map((row) => row.map((cell) => this.escapeCSV(cell)).join(","))
         .join("\n");
 
-      await logger.info("Summary CSV generation completed", {
-        csvLength: csvContent.length,
-        rowCount: summaryRows.length,
-      });
-
       return csvContent;
     } catch (error) {
-      await logger.logError(error, { method: "generateSummaryCSV" });
       console.error("CSV generation failed:", error);
       throw new Error("Failed to generate CSV");
     }

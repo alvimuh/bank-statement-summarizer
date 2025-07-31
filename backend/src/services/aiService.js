@@ -1,6 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const moment = require("moment");
-const logger = require("./loggerService");
 
 class AIService {
   constructor() {
@@ -10,45 +9,23 @@ class AIService {
 
   async analyzeBankStatement(text, userCurrency = null) {
     try {
-      await logger.info("Starting AI analysis", {
-        textLength: text.length,
-        userCurrency: userCurrency,
-      });
-
       // First, detect currency from the PDF content
       const detectedCurrency =
         userCurrency || (await this.detectCurrency(text));
 
-      await logger.logCurrencyDetection(detectedCurrency, text);
-
       const prompt = this.buildAnalysisPrompt(text, detectedCurrency);
-      await logger.logAIRequest(prompt, detectedCurrency);
 
       const result = await this.model.generateContent(prompt);
-      const response = await result.response;
+      const response = result.response;
       const textResponse = response.text();
-
-      await logger.logAIResponse(textResponse, true);
 
       const analysis = await this.parseAIResponse(textResponse);
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
 
-      await logger.logTransactionAnalysis(
-        analysis.allTransactions,
-        analysis.categories,
-        analysis.summary
-      );
-
       return analysis;
     } catch (error) {
-      await logger.logError(error, {
-        method: "analyzeBankStatement",
-        userCurrency: userCurrency,
-        textLength: text.length,
-      });
-
       console.error("AI analysis failed:", error);
 
       // Handle specific Gemini errors
@@ -56,7 +33,6 @@ class AIService {
         error.message.includes("quota") ||
         error.message.includes("quota exceeded")
       ) {
-        await logger.warn("Gemini quota exceeded, using fallback mode");
         console.log("Gemini quota exceeded, using fallback mode...");
         return this.generateFallbackAnalysis(text, userCurrency);
       } else if (error.message.includes("API key")) {
@@ -71,7 +47,6 @@ class AIService {
         error.message.includes("Invalid AI response format") ||
         error.message.includes("Unable to parse AI response JSON")
       ) {
-        await logger.warn("AI response parsing failed, using fallback mode");
         console.log("AI response parsing failed, using fallback mode...");
         return this.generateFallbackAnalysis(text, userCurrency);
       }
@@ -83,8 +58,6 @@ class AIService {
   // Detect currency from PDF content
   async detectCurrency(text) {
     try {
-      await logger.info("Starting currency detection");
-
       const currencyPrompt = `
 Analyze the following bank statement text and detect the currency used.
 Return ONLY the currency code (e.g., USD, EUR, GBP, JPY, CAD, AUD, etc.) in uppercase.
@@ -126,11 +99,6 @@ ${text.substring(0, 2000)}
       const response = await result.response;
       const detectedCurrency = response.text().trim().toUpperCase();
 
-      await logger.info("Currency detection result", {
-        detectedCurrency: detectedCurrency,
-        originalResponse: response.text(),
-      });
-
       // Accept any valid 3-letter currency code
       if (
         detectedCurrency &&
@@ -146,7 +114,6 @@ ${text.substring(0, 2000)}
         return "IDR";
       }
     } catch (error) {
-      await logger.logError(error, { method: "detectCurrency" });
       console.log("Currency detection failed, defaulting to IDR");
       return "IDR";
     }
@@ -154,11 +121,6 @@ ${text.substring(0, 2000)}
 
   // Fallback method for when Gemini is not available
   async generateFallbackAnalysis(text, userCurrency = "IDR") {
-    await logger.info("Starting fallback analysis", {
-      userCurrency: userCurrency,
-      textLength: text.length,
-    });
-
     console.log("Generating fallback analysis...");
 
     // Extract some basic information from the text
@@ -228,12 +190,6 @@ ${text.substring(0, 2000)}
       allTransactions: transactions,
       currency: userCurrency,
     };
-
-    await logger.logTransactionAnalysis(
-      result.allTransactions,
-      result.categories,
-      result.summary
-    );
 
     return result;
   }
@@ -425,74 +381,82 @@ ${text.substring(0, 8000)}
   }
 
   async parseAIResponse(response) {
+    console.log("Parsing AI response...");
+    const fs = require("fs");
+    fs.writeFileSync(
+      new Date().toISOString() + "-raw_response.txt",
+      response,
+      "utf8"
+    );
     try {
-      await logger.info("Starting JSON parsing", {
-        responseLength: response.length,
-        responsePreview: response.substring(0, 500) + "...",
-      });
+      const markdownMatch = response.match(
+        /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
+      );
+      if (!markdownMatch) {
+        throw new Error("No valid markdown code block found in AI response");
+      }
 
-      // First, try to extract JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      const jsonMatch = markdownMatch[1];
       if (!jsonMatch) {
-        await logger.error("No valid JSON found in AI response", { response });
         throw new Error("No valid JSON found in AI response");
       }
 
-      let parsed;
-      try {
-        parsed = JSON.parse(jsonMatch[0]);
-        await logger.logJSONParsing(jsonMatch[0], null, true);
-      } catch (parseError) {
-        await logger.warn(
-          "Initial JSON parse failed, attempting to fix common issues",
-          {
-            parseError: parseError.message,
-            originalJson: jsonMatch[0],
-          }
-        );
-
-        console.error(
-          "Initial JSON parse failed, attempting to fix common issues..."
-        );
-
-        // Try to fix common JSON issues
-        let fixedJson = jsonMatch[0];
-
-        // Fix trailing commas
-        fixedJson = fixedJson.replace(/,(\s*[}\]])/g, "$1");
-
-        // Fix missing quotes around property names
-        fixedJson = fixedJson.replace(
-          /([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g,
-          '$1"$2":'
-        );
-
-        // Fix single quotes to double quotes
-        fixedJson = fixedJson.replace(/'/g, '"');
-
-        // Remove any trailing commas before closing braces/brackets
-        fixedJson = fixedJson.replace(/,(\s*[}\]])/g, "$1");
-
-        try {
-          parsed = JSON.parse(fixedJson);
-          await logger.logJSONParsing(jsonMatch[0], fixedJson, true);
-        } catch (secondError) {
-          await logger.error("Failed to fix JSON, using fallback analysis", {
-            originalJson: jsonMatch[0],
-            fixedJson: fixedJson,
-            secondError: secondError.message,
-          });
-          console.error("Failed to fix JSON, using fallback analysis");
-          throw new Error("Unable to parse AI response JSON");
-        }
-      }
+      let parsed = JSON.parse(jsonMatch);
 
       // Validate and clean the response
       return this.validateAndCleanResponse(parsed);
     } catch (error) {
-      await logger.logError(error, { method: "parseAIResponse" });
       console.error("Failed to parse AI response:", error);
       throw new Error("Invalid AI response format");
+    }
+  }
+
+  // Helper method to fix truncated arrays
+  async fixTruncatedArrays(jsonString) {
+    try {
+      // Find all array patterns and fix them
+      const arrayPattern = /"transactions":\s*\[([\s\S]*?)\]/g;
+      let match;
+      let fixedJson = jsonString;
+
+      while ((match = arrayPattern.exec(jsonString)) !== null) {
+        const arrayContent = match[1];
+        const lines = arrayContent.split("\n");
+        const completeObjects = [];
+        let currentObject = "";
+        let braceCount = 0;
+        let inObject = false;
+
+        for (const line of lines) {
+          if (line.trim().startsWith("{")) {
+            inObject = true;
+            braceCount = 1;
+            currentObject = line;
+          } else if (inObject) {
+            currentObject += "\n" + line;
+            braceCount += (line.match(/\{/g) || []).length;
+            braceCount -= (line.match(/\}/g) || []).length;
+
+            if (braceCount === 0) {
+              // Complete object found
+              completeObjects.push(currentObject);
+              currentObject = "";
+              inObject = false;
+            }
+          }
+        }
+
+        // Replace the array with only complete objects
+        if (completeObjects.length > 0) {
+          const fixedArray =
+            '"transactions": [\n' + completeObjects.join(",\n") + "\n]";
+          fixedJson = fixedJson.replace(match[0], fixedArray);
+        }
+      }
+
+      return fixedJson;
+    } catch (error) {
+      return jsonString;
     }
   }
 

@@ -2,7 +2,6 @@ const multer = require("multer");
 const { body, validationResult } = require("express-validator");
 const pdfService = require("../services/pdfService");
 const aiService = require("../services/aiService");
-const logger = require("../services/loggerService");
 
 // Configure multer for memory storage (no disk storage for privacy)
 const upload = multer({
@@ -23,15 +22,9 @@ const upload = multer({
 class UploadController {
   async uploadAndAnalyze(req, res) {
     try {
-      await logger.info("Starting upload and analysis", {
-        filename: req.file?.originalname,
-        userCurrency: req.body.currency,
-      });
-
       // Validate request
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        await logger.warn("Validation failed", { errors: errors.array() });
         return res.status(400).json({
           error: "Validation failed",
           details: errors.array(),
@@ -39,7 +32,6 @@ class UploadController {
       }
 
       if (!req.file) {
-        await logger.error("No PDF file uploaded");
         return res.status(400).json({ error: "No PDF file uploaded" });
       }
 
@@ -52,7 +44,6 @@ class UploadController {
       const pdfResult = await pdfService.processPDF(req.file);
 
       if (!pdfResult.success) {
-        await logger.error("PDF processing failed", { error: pdfResult.error });
         return res.status(500).json({ error: "Failed to process PDF" });
       }
 
@@ -64,13 +55,6 @@ class UploadController {
 
       // Generate chart data (separate income and expense charts)
       const chartData = await aiService.generateIncomeExpenseCharts(analysis);
-
-      await logger.info("Analysis completed successfully", {
-        filename: req.file.originalname,
-        currency: analysis.currency,
-        transactionCount: analysis.allTransactions.length,
-        categoriesCount: Object.keys(analysis.categories).length,
-      });
 
       // Return comprehensive analysis
       res.json({
@@ -91,11 +75,6 @@ class UploadController {
         },
       });
     } catch (error) {
-      await logger.logError(error, {
-        method: "uploadAndAnalyze",
-        filename: req.file?.originalname,
-      });
-
       console.error("Upload and analysis error:", error);
       res.status(500).json({
         error: "Analysis failed",
@@ -106,22 +85,12 @@ class UploadController {
 
   async uploadOnly(req, res) {
     try {
-      await logger.info("Starting upload-only request", {
-        filename: req.file?.originalname,
-      });
-
       if (!req.file) {
-        await logger.error("No PDF file uploaded for upload-only");
         return res.status(400).json({ error: "No PDF file uploaded" });
       }
 
       // Process PDF only (for testing)
       const pdfResult = await pdfService.processPDF(req.file);
-
-      await logger.info("Upload-only completed", {
-        filename: req.file.originalname,
-        success: pdfResult.success,
-      });
 
       res.json({
         success: true,
@@ -133,11 +102,6 @@ class UploadController {
         },
       });
     } catch (error) {
-      await logger.logError(error, {
-        method: "uploadOnly",
-        filename: req.file?.originalname,
-      });
-
       console.error("Upload error:", error);
       res.status(500).json({
         error: "Upload failed",
