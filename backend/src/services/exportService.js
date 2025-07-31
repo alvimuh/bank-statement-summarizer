@@ -9,7 +9,7 @@ class ExportService {
     try {
       await logger.info("Starting CSV generation", {
         currency: analysisData.currency,
-        transactionCount: analysisData.allTransactions.length
+        transactionCount: analysisData.allTransactions.length,
       });
 
       const { summary, categories, allTransactions, currency } = analysisData;
@@ -69,7 +69,7 @@ class ExportService {
 
       await logger.info("CSV generation completed", {
         csvLength: csvContent.length,
-        rowCount: allRows.length
+        rowCount: allRows.length,
       });
 
       return csvContent;
@@ -85,7 +85,7 @@ class ExportService {
     try {
       await logger.info("Starting transactions CSV generation", {
         currency: analysisData.currency,
-        transactionCount: analysisData.allTransactions.length
+        transactionCount: analysisData.allTransactions.length,
       });
 
       const { allTransactions, currency } = analysisData;
@@ -120,7 +120,7 @@ class ExportService {
 
       await logger.info("Transactions CSV generation completed", {
         csvLength: csvContent.length,
-        rowCount: allRows.length
+        rowCount: allRows.length,
       });
 
       return csvContent;
@@ -136,7 +136,7 @@ class ExportService {
     try {
       await logger.info("Starting summary CSV generation", {
         currency: analysisData.currency,
-        categoriesCount: Object.keys(analysisData.categories).length
+        categoriesCount: Object.keys(analysisData.categories).length,
       });
 
       const { summary, categories, currency } = analysisData;
@@ -176,7 +176,7 @@ class ExportService {
 
       await logger.info("Summary CSV generation completed", {
         csvLength: csvContent.length,
-        rowCount: summaryRows.length
+        rowCount: summaryRows.length,
       });
 
       return csvContent;

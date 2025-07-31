@@ -64,7 +64,9 @@ router.post(
       const { analysisData } = req.body;
 
       // Generate transactions CSV content
-      const csvContent = await exportService.generateTransactionsCSV(analysisData);
+      const csvContent = await exportService.generateTransactionsCSV(
+        analysisData
+      );
       const filename = exportService.generateFilename(
         "transactions",
         analysisData.currency

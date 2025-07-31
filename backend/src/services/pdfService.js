@@ -10,7 +10,7 @@ class PDFService {
     try {
       await logger.info("Starting PDF processing", {
         filename: file.originalname,
-        fileSize: file.size
+        fileSize: file.size,
       });
 
       const fileId = uuidv4();
@@ -37,17 +37,20 @@ class PDFService {
 
       // Check if we got meaningful text
       if (pdfData.text.trim().length < 50) {
-        await logger.warn("PDF text extraction yielded minimal text, attempting OCR", {
-          textLength: pdfData.text.length,
-          textPreview: pdfData.text.substring(0, 200)
-        });
+        await logger.warn(
+          "PDF text extraction yielded minimal text, attempting OCR",
+          {
+            textLength: pdfData.text.length,
+            textPreview: pdfData.text.substring(0, 200),
+          }
+        );
 
         // Try OCR as fallback
         const ocrText = await this.performOCR(file.buffer);
-        
+
         await logger.info("OCR completed", {
           ocrTextLength: ocrText.length,
-          ocrTextPreview: ocrText.substring(0, 200)
+          ocrTextPreview: ocrText.substring(0, 200),
         });
 
         return {
@@ -68,7 +71,7 @@ class PDFService {
       await logger.logError(error, {
         method: "processPDF",
         filename: file.originalname,
-        fileSize: file.size
+        fileSize: file.size,
       });
 
       return {
@@ -81,7 +84,7 @@ class PDFService {
   async performOCR(buffer) {
     try {
       await logger.info("Starting OCR processing");
-      
+
       const result = await Tesseract.recognize(buffer, "eng", {
         logger: (m) => {
           if (m.status === "recognizing text") {
@@ -91,7 +94,7 @@ class PDFService {
       });
 
       await logger.info("OCR completed successfully", {
-        textLength: result.data.text.length
+        textLength: result.data.text.length,
       });
 
       return result.data.text;

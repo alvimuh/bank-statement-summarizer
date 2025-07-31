@@ -12,7 +12,7 @@ class AIService {
     try {
       await logger.info("Starting AI analysis", {
         textLength: text.length,
-        userCurrency: userCurrency
+        userCurrency: userCurrency,
       });
 
       // First, detect currency from the PDF content
@@ -46,7 +46,7 @@ class AIService {
       await logger.logError(error, {
         method: "analyzeBankStatement",
         userCurrency: userCurrency,
-        textLength: text.length
+        textLength: text.length,
       });
 
       console.error("AI analysis failed:", error);
@@ -84,7 +84,7 @@ class AIService {
   async detectCurrency(text) {
     try {
       await logger.info("Starting currency detection");
-      
+
       const currencyPrompt = `
 Analyze the following bank statement text and detect the currency used.
 Return ONLY the currency code (e.g., USD, EUR, GBP, JPY, CAD, AUD, etc.) in uppercase.
@@ -128,7 +128,7 @@ ${text.substring(0, 2000)}
 
       await logger.info("Currency detection result", {
         detectedCurrency: detectedCurrency,
-        originalResponse: response.text()
+        originalResponse: response.text(),
       });
 
       // Accept any valid 3-letter currency code
@@ -156,9 +156,9 @@ ${text.substring(0, 2000)}
   async generateFallbackAnalysis(text, userCurrency = "IDR") {
     await logger.info("Starting fallback analysis", {
       userCurrency: userCurrency,
-      textLength: text.length
+      textLength: text.length,
     });
-    
+
     console.log("Generating fallback analysis...");
 
     // Extract some basic information from the text
@@ -428,7 +428,7 @@ ${text.substring(0, 8000)}
     try {
       await logger.info("Starting JSON parsing", {
         responseLength: response.length,
-        responsePreview: response.substring(0, 500) + '...'
+        responsePreview: response.substring(0, 500) + "...",
       });
 
       // First, try to extract JSON from response
@@ -443,11 +443,14 @@ ${text.substring(0, 8000)}
         parsed = JSON.parse(jsonMatch[0]);
         await logger.logJSONParsing(jsonMatch[0], null, true);
       } catch (parseError) {
-        await logger.warn("Initial JSON parse failed, attempting to fix common issues", {
-          parseError: parseError.message,
-          originalJson: jsonMatch[0]
-        });
-        
+        await logger.warn(
+          "Initial JSON parse failed, attempting to fix common issues",
+          {
+            parseError: parseError.message,
+            originalJson: jsonMatch[0],
+          }
+        );
+
         console.error(
           "Initial JSON parse failed, attempting to fix common issues..."
         );
@@ -477,7 +480,7 @@ ${text.substring(0, 8000)}
           await logger.error("Failed to fix JSON, using fallback analysis", {
             originalJson: jsonMatch[0],
             fixedJson: fixedJson,
-            secondError: secondError.message
+            secondError: secondError.message,
           });
           console.error("Failed to fix JSON, using fallback analysis");
           throw new Error("Unable to parse AI response JSON");

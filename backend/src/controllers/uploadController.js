@@ -25,7 +25,7 @@ class UploadController {
     try {
       await logger.info("Starting upload and analysis", {
         filename: req.file?.originalname,
-        userCurrency: req.body.currency
+        userCurrency: req.body.currency,
       });
 
       // Validate request
@@ -69,7 +69,7 @@ class UploadController {
         filename: req.file.originalname,
         currency: analysis.currency,
         transactionCount: analysis.allTransactions.length,
-        categoriesCount: Object.keys(analysis.categories).length
+        categoriesCount: Object.keys(analysis.categories).length,
       });
 
       // Return comprehensive analysis
@@ -93,9 +93,9 @@ class UploadController {
     } catch (error) {
       await logger.logError(error, {
         method: "uploadAndAnalyze",
-        filename: req.file?.originalname
+        filename: req.file?.originalname,
       });
-      
+
       console.error("Upload and analysis error:", error);
       res.status(500).json({
         error: "Analysis failed",
@@ -107,7 +107,7 @@ class UploadController {
   async uploadOnly(req, res) {
     try {
       await logger.info("Starting upload-only request", {
-        filename: req.file?.originalname
+        filename: req.file?.originalname,
       });
 
       if (!req.file) {
@@ -120,7 +120,7 @@ class UploadController {
 
       await logger.info("Upload-only completed", {
         filename: req.file.originalname,
-        success: pdfResult.success
+        success: pdfResult.success,
       });
 
       res.json({
@@ -135,9 +135,9 @@ class UploadController {
     } catch (error) {
       await logger.logError(error, {
         method: "uploadOnly",
-        filename: req.file?.originalname
+        filename: req.file?.originalname,
       });
-      
+
       console.error("Upload error:", error);
       res.status(500).json({
         error: "Upload failed",
