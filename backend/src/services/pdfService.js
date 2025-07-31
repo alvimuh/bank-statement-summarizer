@@ -25,15 +25,27 @@ class PDFService {
 
       // Check if we got meaningful text
       if (pdfData.text.trim().length < 50) {
-        // Try OCR as fallback
-        const ocrText = await this.performOCR(file.buffer);
+        console.log(
+          "PDF text extraction yielded minimal text, attempting OCR..."
+        );
 
-        return {
-          success: true,
-          text: ocrText,
-          pages: pdfData.numpages,
-          fileId: fileId,
-        };
+        try {
+          // Try OCR as fallback
+          const ocrText = await this.performOCR(file.buffer);
+
+          if (ocrText && ocrText.trim().length > 10) {
+            return {
+              success: true,
+              text: ocrText,
+              pages: pdfData.numpages,
+              fileId: fileId,
+              method: "ocr",
+            };
+          }
+        } catch (ocrError) {
+          console.error("OCR processing failed:", ocrError);
+          // Continue with the original text even if OCR fails
+        }
       }
 
       return {
@@ -41,23 +53,82 @@ class PDFService {
         text: pdfData.text,
         pages: pdfData.numpages,
         fileId: fileId,
+        method: "pdf-parse",
       };
     } catch (error) {
+      console.error("PDF processing error:", error);
+
+      // Try OCR as last resort
+      try {
+        console.log("Attempting OCR as fallback...");
+        const ocrText = await this.performOCR(file.buffer);
+
+        if (ocrText && ocrText.trim().length > 10) {
+          return {
+            success: true,
+            text: ocrText,
+            pages: 1, // Default to 1 page if we can't determine
+            fileId: uuidv4(),
+            method: "ocr-fallback",
+          };
+        }
+      } catch (ocrError) {
+        console.error("OCR fallback also failed:", ocrError);
+      }
+
       return {
         success: false,
-        error: error.message,
+        error: `PDF processing failed: ${error.message}`,
       };
     }
   }
 
   async performOCR(buffer) {
     try {
-      const result = await Tesseract.recognize(buffer, "eng");
+      console.log("Starting OCR processing...");
 
+      // Create a worker with proper error handling
+      const worker = await Tesseract.createWorker({
+        logger: (m) => {
+          if (m.status === "recognizing text") {
+            console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+          }
+        },
+      });
+
+      // Initialize worker
+      await worker.loadLanguage("eng");
+      await worker.initialize("eng");
+
+      // Recognize text with timeout
+      const result = await Promise.race([
+        worker.recognize(buffer),
+        new Promise(
+          (_, reject) =>
+            setTimeout(() => reject(new Error("OCR timeout")), 60000) // 60 second timeout
+        ),
+      ]);
+
+      // Terminate worker
+      await worker.terminate();
+
+      console.log("OCR completed successfully");
       return result.data.text;
     } catch (error) {
       console.error("OCR processing failed:", error);
-      throw new Error(`OCR failed: ${error.message}`);
+
+      // Return a more specific error message
+      if (error.message.includes("timeout")) {
+        throw new Error(
+          "OCR processing timed out. Please try with a smaller file or clearer image."
+        );
+      } else if (error.message.includes("read image")) {
+        throw new Error(
+          "Unable to read image from PDF. The file might be corrupted or in an unsupported format."
+        );
+      } else {
+        throw new Error(`OCR failed: ${error.message}`);
+      }
     }
   }
 }

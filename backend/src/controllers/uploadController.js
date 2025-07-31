@@ -84,21 +84,48 @@ class UploadController {
   }
 
   async uploadAndAnalyzeStreaming(req, res) {
-    try {
-      // Validate request
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({
-          error: "Validation failed",
-          details: errors.array(),
-        });
+    // Set a timeout for the entire request
+    const timeout = setTimeout(() => {
+      if (!res.headersSent) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: "error",
+            message: "Request timeout. Please try again with a smaller file.",
+          })}\n\n`
+        );
+        res.flush();
+        res.end();
       }
+    }, 300000); // 5 minutes timeout
+
+    try {
+      console.log("Processing streaming request");
 
       if (!req.file) {
-        return res.status(400).json({ error: "No PDF file uploaded" });
+        res.write(
+          `data: ${JSON.stringify({
+            type: "error",
+            message: "No file uploaded",
+          })}\n\n`
+        );
+        res.flush();
+        res.end();
+        return;
       }
 
-      console.log("Processing PDF with streaming:", req.file.originalname);
+      // Check file size (limit to 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (req.file.size > maxSize) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: "error",
+            message: "File too large. Please upload a file smaller than 10MB.",
+          })}\n\n`
+        );
+        res.flush();
+        res.end();
+        return;
+      }
 
       // Set SSE headers
       res.setHeader("Content-Type", "text/event-stream");
@@ -107,92 +134,101 @@ class UploadController {
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.setHeader("Access-Control-Allow-Headers", "Cache-Control");
 
-      // Send initial status
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: "Starting PDF processing...",
-        })}\n\n`
-      );
-      res.flush();
-
-      // Get currency from request body or use auto-detection
-      const userCurrency = req.body.currency || null;
-
-      // Process PDF and extract text
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: "Extracting text from PDF...",
-        })}\n\n`
-      );
-      res.flush();
-
-      const pdfResult = await pdfService.processPDF(req.file);
-
-      if (!pdfResult.success) {
-        res.write(
-          `data: ${JSON.stringify({
-            type: "error",
-            message:
-              "Failed to process PDF. Please ensure the file is a valid PDF.",
-          })}\n\n`
-        );
-        res.flush();
-        return res.end();
-      }
-
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: `PDF processed successfully. Found ${pdfResult.pages} pages and extracted ${pdfResult.text.length} characters.`,
-        })}\n\n`
-      );
-      res.flush();
-
-      // Analyze with AI using streaming
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: "Starting AI analysis...",
-        })}\n\n`
-      );
-      res.flush();
-
-      const analysis = await aiService.analyzeBankStatementStreaming(
-        pdfResult.text,
-        userCurrency,
-        (chunk) => {
-          res.write(
-            `data: ${JSON.stringify({
-              type: "analysis_chunk",
-              content: chunk,
-            })}\n\n`
-          );
+      const sendChunk = (data) => {
+        if (!res.headersSent) {
+          res.write(`data: ${JSON.stringify(data)}\n\n`);
           res.flush();
         }
-      );
+      };
 
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: "Analysis completed. Generating charts...",
-        })}\n\n`
-      );
-      res.flush();
+      // Send initial status
+      sendChunk({ type: "status", message: "Starting PDF processing..." });
 
-      // Generate chart data
-      const chartData = await aiService.generateIncomeExpenseCharts(analysis);
+      // Process PDF with timeout
+      const pdfResult = await Promise.race([
+        pdfService.processPDF(req.file),
+        new Promise(
+          (_, reject) =>
+            setTimeout(
+              () => reject(new Error("PDF processing timeout")),
+              120000
+            ) // 2 minutes
+        ),
+      ]);
 
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: "Charts generated successfully. Finalizing results...",
-        })}\n\n`
-      );
-      res.flush();
+      if (!pdfResult.success) {
+        sendChunk({ type: "error", message: pdfResult.error });
+        res.end();
+        return;
+      }
 
-      // Send final result
+      sendChunk({
+        type: "status",
+        message: `PDF processed successfully. Found ${pdfResult.pages} pages and extracted ${pdfResult.text.length} characters.`,
+      });
+
+      // Get currency from request or auto-detect
+      const userCurrency = req.body.currency || "IDR";
+
+      // Analyze with AI using streaming
+      sendChunk({ type: "status", message: "Starting AI analysis..." });
+
+      const analysis = await Promise.race([
+        aiService.analyzeBankStatementStreaming(
+          pdfResult.text,
+          userCurrency,
+          (chunk) => {
+            sendChunk({ type: "analysis_chunk", content: chunk });
+          }
+        ),
+        new Promise(
+          (_, reject) =>
+            setTimeout(() => reject(new Error("AI analysis timeout")), 180000) // 3 minutes
+        ),
+      ]);
+
+      // Generate charts
+      sendChunk({ type: "status", message: "Generating charts..." });
+
+      const chartData = {
+        expenseChart: {
+          labels: Object.keys(analysis.categories).filter(
+            (cat) => cat !== "Salary/Income"
+          ),
+          datasets: [
+            {
+              label: "Expenses by Category",
+              data: Object.keys(analysis.categories)
+                .filter((cat) => cat !== "Salary/Income")
+                .map((cat) => analysis.categories[cat].total),
+              backgroundColor: [
+                "#FF6384",
+                "#36A2EB",
+                "#FFCE56",
+                "#4BC0C0",
+                "#9966FF",
+                "#FF9F40",
+                "#FF6384",
+                "#C9CBCF",
+              ],
+              borderWidth: 2,
+            },
+          ],
+        },
+        incomeChart: {
+          labels: ["Salary/Income"],
+          datasets: [
+            {
+              label: "Income by Category",
+              data: [analysis.summary.totalIncome],
+              backgroundColor: ["#4CAF50"],
+              borderWidth: 2,
+            },
+          ],
+        },
+      };
+
+      // Prepare final result
       const finalResult = {
         type: "complete",
         data: {
@@ -200,42 +236,55 @@ class UploadController {
           categories: analysis.categories,
           allTransactions: analysis.allTransactions,
           chartData: chartData,
-          currency: analysis.currency,
+          currency: userCurrency,
           processingInfo: {
             pages: pdfResult.pages,
             fileId: pdfResult.fileId,
             processedAt: new Date().toISOString(),
-            detectedCurrency: analysis.currency,
+            detectedCurrency: userCurrency,
+            processingMethod: pdfResult.method || "unknown",
           },
         },
       };
 
-      res.write(`data: ${JSON.stringify(finalResult)}\n\n`);
-      res.flush();
+      sendChunk(finalResult);
       res.end();
     } catch (error) {
       console.error("Streaming analysis error:", error);
 
-      // Send more specific error messages
-      let errorMessage = "Analysis failed. Please try again.";
+      let errorMessage = "An unexpected error occurred during analysis.";
 
-      if (error.message.includes("quota")) {
-        errorMessage = "API quota exceeded. Please try again later.";
-      } else if (error.message.includes("rate limit")) {
+      if (error.message.includes("OCR")) {
         errorMessage =
-          "Rate limit exceeded. Please wait a moment and try again.";
-      } else if (error.message.includes("PDF")) {
+          "OCR processing failed. Please ensure your PDF contains clear, readable text.";
+      } else if (error.message.includes("timeout")) {
+        errorMessage = "Processing timed out. Please try with a smaller file.";
+      } else if (error.message.includes("network")) {
         errorMessage =
-          "PDF processing failed. Please ensure the file is a valid PDF.";
+          "Network error occurred. Please check your connection and try again.";
       } else if (error.message.includes("AI")) {
-        errorMessage = "AI analysis failed. Please try again.";
+        errorMessage =
+          "AI analysis failed. Please try again or contact support.";
+      } else if (error.message.includes("PDF processing timeout")) {
+        errorMessage =
+          "PDF processing took too long. Please try with a smaller or simpler PDF.";
+      } else if (error.message.includes("AI analysis timeout")) {
+        errorMessage =
+          "AI analysis took too long. Please try with a smaller file.";
       }
 
-      res.write(
-        `data: ${JSON.stringify({ type: "error", message: errorMessage })}\n\n`
-      );
-      res.flush();
-      res.end();
+      if (!res.headersSent) {
+        res.write(
+          `data: ${JSON.stringify({
+            type: "error",
+            message: errorMessage,
+          })}\n\n`
+        );
+        res.flush();
+        res.end();
+      }
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

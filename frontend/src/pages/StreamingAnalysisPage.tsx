@@ -12,7 +12,6 @@ import {
   FileDown,
   ChevronDown,
   X,
-  BanknoteIcon,
 } from "lucide-react";
 import {
   Chart as ChartJS,
@@ -608,10 +607,10 @@ const StreamingAnalysisPage = () => {
           )}
 
           {/* Current Status */}
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <div className="flex items-center space-x-2 p-4 bg-blue-100 rounded-lg">
-              <Loader className="size-6 text-blue-600 animate-spin" />
-              <span className="text-sm text-blue-700">
+          <div className="mt-4 p-3 bg-slate-200 rounded-lg">
+            <div className="flex items-center space-x-2 px-4 py-2 bg-slate-100 rounded-lg w-fit">
+              <Loader className="size-6 text-slate-600 animate-spin" />
+              <b className="text-sm text-slate-600 font-semibold">
                 {analysisChunks.length > 0
                   ? analysisChunks
                       .filter((chunk) => /^[🤔📊🔍💰📈🏷️📋⚡✅]/.test(chunk))
@@ -619,19 +618,17 @@ const StreamingAnalysisPage = () => {
                   : statusMessages.length > 0
                   ? statusMessages[statusMessages.length - 1]
                   : "Starting analysis..."}
-              </span>
+              </b>
             </div>
 
-            {analysisChunks.length > 0 && (
-              <div
-                className="mt-2 pt-2 border-blue-200 whitespace-pre-line font-mono max-h-40 overflow-y-auto text-xs"
-                ref={(el) => {
-                  if (el) el.scrollTop = el.scrollHeight;
-                }}
-              >
-                {analysisChunks.join("\n")}
-              </div>
-            )}
+            <div
+              className="mt-2 pt-2 border-slate-200 whitespace-pre-line font-mono h-40 overflow-y-auto text-xs text-slate-600 p-5"
+              ref={(el) => {
+                if (el) el.scrollTop = el.scrollHeight;
+              }}
+            >
+              {analysisChunks.join("\n") || "Reading your bank statement..."}
+            </div>
           </div>
 
           {/* Analysis Chunks */}
