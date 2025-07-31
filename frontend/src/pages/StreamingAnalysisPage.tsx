@@ -191,15 +191,16 @@ const StreamingAnalysisPage = () => {
       // Create abort controller for cancellation
       abortControllerRef.current = new AbortController();
 
+      // Get API URL from environment or use current origin
+      const apiUrl =
+        import.meta.env.VITE_API_URL || `${window.location.origin}/api`;
+
       // Create new EventSource for streaming
-      const response = await fetch(
-        "http://localhost:3001/api/upload/analyze-v2",
-        {
-          method: "POST",
-          body: formData,
-          signal: abortControllerRef.current.signal,
-        }
-      );
+      const response = await fetch(`${apiUrl}/upload/analyze-v2`, {
+        method: "POST",
+        body: formData,
+        signal: abortControllerRef.current.signal,
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -273,14 +274,15 @@ const StreamingAnalysisPage = () => {
       // Create abort controller for cancellation
       abortControllerRef.current = new AbortController();
 
+      // Get API URL from environment or use current origin
+      const apiUrl =
+        import.meta.env.VITE_API_URL || `${window.location.origin}/api`;
+
       // Call the mock API endpoint
-      const response = await fetch(
-        "http://localhost:3001/api/upload/analyze-mock",
-        {
-          method: "POST",
-          signal: abortControllerRef.current.signal,
-        }
-      );
+      const response = await fetch(`${apiUrl}/upload/analyze-mock`, {
+        method: "POST",
+        signal: abortControllerRef.current.signal,
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

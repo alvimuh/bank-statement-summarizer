@@ -1,14 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const morgan = require("morgan");
 require("dotenv").config();
-
-const uploadRoutes = require("./routes/upload");
-const analysisRoutes = require("./routes/analysis");
-const exportRoutes = require("./routes/export");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,24 +20,24 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 // Security middleware
-app.use(helmet());
-
-// Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
 });
-app.use("/api/", limiter);
 
-// Compression middleware
+app.use(limiter);
 app.use(compression());
 
-// CORS configuration
+// CORS configuration for Vercel
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: process.env.NODE_ENV === "production" 
+      ? ["https://your-domain.vercel.app", "https://your-domain.vercel.app"] 
+      : ["http://localhost:5173", "http://localhost:3000"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cache-Control"],
   })
 );
 
@@ -52,15 +47,16 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // Health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    service: "Bank Statement Summarizer API",
-  });
+app.get("/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// API routes
+// Import routes
+const uploadRoutes = require("./routes/upload");
+const analysisRoutes = require("./routes/analysis");
+const exportRoutes = require("./routes/export");
+
+// Use routes
 app.use("/api/upload", uploadRoutes);
 app.use("/api/analysis", analysisRoutes);
 app.use("/api/export", exportRoutes);
@@ -83,16 +79,16 @@ app.use((error, req, res, next) => {
 });
 
 // 404 handler
-app.use("*", (req, res) => {
-  res.status(404).json({
-    error: "Not Found",
-    message: "The requested endpoint does not exist",
-  });
+app.use((req, res) => {
+  res.status(404).json({ error: "Endpoint not found" });
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
-});
-
+// Export for Vercel serverless
 module.exports = app;
+
+// Only start server if not in Vercel environment
+if (process.env.NODE_ENV !== "production" || process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
