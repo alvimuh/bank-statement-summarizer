@@ -4,22 +4,28 @@ const moment = require("moment");
 class AIService {
   constructor() {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    this.model = this.genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        maxOutputTokens: 65536,
+        temperature: 0.1,
+      },
+    });
   }
 
   async analyzeBankStatement(text, userCurrency = null) {
     try {
+      console.log(`Processing text of length: ${text.length} characters`);
+
       // First, detect currency from the PDF content
       const detectedCurrency =
         userCurrency || (await this.detectCurrency(text));
 
-      const prompt = this.buildAnalysisPrompt(text, detectedCurrency);
-
-      const result = await this.model.generateContent(prompt);
-      const response = result.response;
-      const textResponse = response.text();
-
-      const analysis = await this.parseAIResponse(textResponse);
+      // Use structured JSON response for reliable parsing
+      const analysis = await this.generateStructuredAnalysis(
+        text,
+        detectedCurrency
+      );
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
@@ -45,13 +51,46 @@ class AIService {
         );
       } else if (
         error.message.includes("Invalid AI response format") ||
-        error.message.includes("Unable to parse AI response JSON")
+        error.message.includes("Unable to parse AI response JSON") ||
+        error.message.includes("Structured analysis failed")
       ) {
         console.log("AI response parsing failed, using fallback mode...");
         return this.generateFallbackAnalysis(text, userCurrency);
       }
 
       throw new Error(`Failed to analyze bank statement: ${error.message}`);
+    }
+  }
+
+  // Generate structured analysis using improved prompting
+  async generateStructuredAnalysis(text, currency) {
+    try {
+      const prompt = this.buildAnalysisPrompt(text, currency);
+
+      console.log("Prompt length: ", prompt);
+      // throw new Error("test");
+      const result = await this.model.generateContent(prompt);
+      const response = result.response;
+      const textResponse = response.text();
+
+      console.log(`Response length: ${textResponse.length} characters`);
+      const fs = require("fs");
+      fs.writeFileSync(
+        new Date().toISOString() + "_response.txt",
+        textResponse
+      );
+
+      // Try to extract JSON from the response
+      const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("No valid JSON found in AI response");
+      }
+
+      const analysis = JSON.parse(jsonMatch[0]);
+      return this.validateAndCleanResponse(analysis);
+    } catch (error) {
+      console.error("Structured analysis failed:", error);
+      throw error;
     }
   }
 
@@ -92,7 +131,7 @@ Common currency patterns to look for:
 - Ξ = ETH (Ethereum)
 
 Bank statement text:
-${text.substring(0, 2000)}
+${text.substring(0, 5000)}
       `;
 
       const result = await this.model.generateContent(currencyPrompt);
@@ -376,88 +415,8 @@ IMPORTANT RULES:
 - Ensure all JSON is properly formatted with double quotes
 
 Bank statement text to analyze:
-${text.substring(0, 8000)}
+${text}
     `;
-  }
-
-  async parseAIResponse(response) {
-    console.log("Parsing AI response...");
-    const fs = require("fs");
-    fs.writeFileSync(
-      new Date().toISOString() + "-raw_response.txt",
-      response,
-      "utf8"
-    );
-    try {
-      const markdownMatch = response.match(
-        /```(?:json)?\s*(\{[\s\S]*?\})\s*```/
-      );
-      if (!markdownMatch) {
-        throw new Error("No valid markdown code block found in AI response");
-      }
-
-      const jsonMatch = markdownMatch[1];
-      if (!jsonMatch) {
-        throw new Error("No valid JSON found in AI response");
-      }
-
-      let parsed = JSON.parse(jsonMatch);
-
-      // Validate and clean the response
-      return this.validateAndCleanResponse(parsed);
-    } catch (error) {
-      console.error("Failed to parse AI response:", error);
-      throw new Error("Invalid AI response format");
-    }
-  }
-
-  // Helper method to fix truncated arrays
-  async fixTruncatedArrays(jsonString) {
-    try {
-      // Find all array patterns and fix them
-      const arrayPattern = /"transactions":\s*\[([\s\S]*?)\]/g;
-      let match;
-      let fixedJson = jsonString;
-
-      while ((match = arrayPattern.exec(jsonString)) !== null) {
-        const arrayContent = match[1];
-        const lines = arrayContent.split("\n");
-        const completeObjects = [];
-        let currentObject = "";
-        let braceCount = 0;
-        let inObject = false;
-
-        for (const line of lines) {
-          if (line.trim().startsWith("{")) {
-            inObject = true;
-            braceCount = 1;
-            currentObject = line;
-          } else if (inObject) {
-            currentObject += "\n" + line;
-            braceCount += (line.match(/\{/g) || []).length;
-            braceCount -= (line.match(/\}/g) || []).length;
-
-            if (braceCount === 0) {
-              // Complete object found
-              completeObjects.push(currentObject);
-              currentObject = "";
-              inObject = false;
-            }
-          }
-        }
-
-        // Replace the array with only complete objects
-        if (completeObjects.length > 0) {
-          const fixedArray =
-            '"transactions": [\n' + completeObjects.join(",\n") + "\n]";
-          fixedJson = fixedJson.replace(match[0], fixedArray);
-        }
-      }
-
-      return fixedJson;
-    } catch (error) {
-      return jsonString;
-    }
   }
 
   validateAndCleanResponse(data) {
