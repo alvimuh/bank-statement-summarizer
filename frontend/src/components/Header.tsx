@@ -1,13 +1,13 @@
-import { Link, useLocation } from "react-router-dom";
-import { Shield, BarChart3, Upload } from "lucide-react";
+import { Shield } from "lucide-react";
 
 const Header = () => {
-  const location = useLocation();
+  // const location = useLocation();
 
-  const navItems = [
-    { path: "/", label: "Home", icon: Upload },
-    { path: "/analysis", label: "Analysis", icon: BarChart3 },
-  ];
+  // const navItems = [
+  //   { path: "/", label: "Home", icon: Upload },
+  //   { path: "/analysis", label: "Analysis", icon: BarChart3 },
+  //   { path: "/streaming-analysis", label: "Streaming", icon: Radio },
+  // ];
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -27,7 +27,7 @@ const Header = () => {
             </div>
           </div>
 
-          <nav className="flex items-center space-x-1">
+          {/* <nav className="flex items-center space-x-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -47,7 +47,7 @@ const Header = () => {
                 </Link>
               );
             })}
-          </nav>
+          </nav> */}
         </div>
       </div>
     </header>

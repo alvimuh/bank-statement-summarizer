@@ -62,6 +62,72 @@ class AIService {
     }
   }
 
+  async analyzeBankStatementStreaming(
+    text,
+    userCurrency = null,
+    onChunk = null
+  ) {
+    try {
+      console.log(
+        `Processing text of length: ${text.length} characters with streaming`
+      );
+
+      // First, detect currency from the PDF content
+      const detectedCurrency =
+        userCurrency || (await this.detectCurrency(text));
+
+      if (onChunk) {
+        onChunk(`Detected currency: ${detectedCurrency}`);
+      }
+
+      // Use streaming for structured analysis
+      const analysis = await this.generateStructuredAnalysisStreaming(
+        text,
+        detectedCurrency,
+        onChunk
+      );
+
+      // Add currency information to the analysis
+      analysis.currency = detectedCurrency;
+
+      return analysis;
+    } catch (error) {
+      console.error("Streaming AI analysis failed:", error);
+
+      // Handle specific Gemini errors
+      if (
+        error.message.includes("quota") ||
+        error.message.includes("quota exceeded")
+      ) {
+        console.log("Gemini quota exceeded, using fallback mode...");
+        if (onChunk) {
+          onChunk("Using fallback analysis due to API quota limits...");
+        }
+        return this.generateFallbackAnalysis(text, userCurrency);
+      } else if (error.message.includes("API key")) {
+        throw new Error(
+          "Invalid Gemini API key. Please check your configuration."
+        );
+      } else if (error.message.includes("rate limit")) {
+        throw new Error(
+          "Gemini API rate limit exceeded. Please try again later."
+        );
+      } else if (
+        error.message.includes("Invalid AI response format") ||
+        error.message.includes("Unable to parse AI response JSON") ||
+        error.message.includes("Structured analysis failed")
+      ) {
+        console.log("AI response parsing failed, using fallback mode...");
+        if (onChunk) {
+          onChunk("Using fallback analysis due to parsing issues...");
+        }
+        return this.generateFallbackAnalysis(text, userCurrency);
+      }
+
+      throw new Error(`Failed to analyze bank statement: ${error.message}`);
+    }
+  }
+
   // Generate structured analysis using improved prompting
   async generateStructuredAnalysis(text, currency) {
     try {
@@ -69,16 +135,11 @@ class AIService {
 
       console.log("Prompt length: ", prompt);
       // throw new Error("test");
-      const result = await this.model.generateContent(prompt);
+      const result = await this.model.generateContentStream(prompt);
       const response = result.response;
       const textResponse = response.text();
 
       console.log(`Response length: ${textResponse.length} characters`);
-      const fs = require("fs");
-      fs.writeFileSync(
-        new Date().toISOString() + "_response.txt",
-        textResponse
-      );
 
       // Try to extract JSON from the response
       const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
@@ -90,6 +151,68 @@ class AIService {
       return this.validateAndCleanResponse(analysis);
     } catch (error) {
       console.error("Structured analysis failed:", error);
+      throw error;
+    }
+  }
+
+  // Generate structured analysis using streaming
+  async generateStructuredAnalysisStreaming(text, currency, onChunk = null) {
+    try {
+      const prompt = this.buildAnalysisPrompt(text, currency);
+
+      console.log("Prompt length: ", prompt);
+
+      if (onChunk) {
+        onChunk("🤔 Starting AI analysis...");
+        onChunk("📊 Analyzing bank statement structure...");
+      }
+
+      const result = await this.model.generateContentStream(prompt);
+      let fullResponse = "";
+      let chunkCount = 0;
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        fullResponse += text;
+        chunkCount++;
+
+        if (onChunk) {
+          // Provide more detailed updates about what the AI is doing
+          if (chunkCount === 1) {
+            onChunk("🔍 Detecting transaction patterns...");
+          } else if (chunkCount === 5) {
+            onChunk("💰 Categorizing income and expenses...");
+          } else if (chunkCount === 10) {
+            onChunk("📈 Calculating totals and summaries...");
+          } else if (chunkCount === 15) {
+            onChunk("🏷️ Assigning categories to transactions...");
+          } else if (chunkCount === 20) {
+            onChunk("📋 Validating data accuracy...");
+          } else if (chunkCount % 5 === 0) {
+            onChunk(`⚡ Processing... (${chunkCount} chunks analyzed)`);
+          }
+
+          // Also send the actual AI response chunks
+          onChunk(text);
+        }
+      }
+
+      console.log(`Response length: ${fullResponse.length} characters`);
+
+      if (onChunk) {
+        onChunk("✅ Analysis complete! Parsing results...");
+      }
+
+      // Try to extract JSON from the response
+      const jsonMatch = fullResponse.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("No valid JSON found in AI response");
+      }
+
+      const analysis = JSON.parse(jsonMatch[0]);
+      return this.validateAndCleanResponse(analysis);
+    } catch (error) {
+      console.error("Streaming structured analysis failed:", error);
       throw error;
     }
   }

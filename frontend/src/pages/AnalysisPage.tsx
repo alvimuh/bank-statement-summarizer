@@ -3,7 +3,6 @@ import { useLocation, Link } from "react-router-dom";
 import {
   BarChart3,
   ArrowLeft,
-  Download,
   Eye,
   EyeOff,
   Globe,
@@ -193,8 +192,7 @@ const AnalysisPage = () => {
           callback: function (value: any) {
             const currency =
               currencies[analysisResult.currency as keyof typeof currencies];
-            const symbol = currency ? currency.symbol : analysisResult.currency;
-            return symbol + value.toLocaleString();
+            return (currency ? currency.symbol : analysisResult.currency) + value.toLocaleString();
           },
         },
       },
@@ -202,10 +200,6 @@ const AnalysisPage = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    const currency =
-      currencies[analysisResult.currency as keyof typeof currencies];
-    const symbol = currency ? currency.symbol : analysisResult.currency;
-
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: analysisResult.currency,

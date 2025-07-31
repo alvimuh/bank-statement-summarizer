@@ -10,6 +10,17 @@ router.post(
   UploadController.uploadAndAnalyze
 );
 
+// V2: Streaming analyze endpoint
+router.post(
+  "/analyze-v2",
+  UploadController.validateUpload(),
+  UploadController.handleMulterError,
+  UploadController.uploadAndAnalyzeStreaming
+);
+
+// Mock streaming endpoint for testing
+router.post("/analyze-mock", UploadController.uploadAndAnalyzeMock);
+
 // Upload only (for testing)
 router.post(
   "/upload-only",

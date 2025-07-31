@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import HomePage from "./pages/HomePage";
 import AnalysisPage from "./pages/AnalysisPage";
+import StreamingAnalysisPage from "./pages/StreamingAnalysisPage";
 
 function App() {
   return (
@@ -13,6 +14,10 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/analysis" element={<AnalysisPage />} />
+            <Route
+              path="/streaming-analysis"
+              element={<StreamingAnalysisPage />}
+            />
           </Routes>
         </main>
         <Toaster
