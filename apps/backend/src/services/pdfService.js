@@ -1,27 +1,14 @@
 const pdf = require("pdf-parse");
 const Tesseract = require("tesseract.js");
-const fs = require("fs-extra");
-const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
 class PDFService {
   async processPDF(file) {
     try {
       const fileId = uuidv4();
-      const tempFilePath = path.join(__dirname, "../../temp", `${fileId}.pdf`);
-
-      // Ensure temp directory exists
-      await fs.ensureDir(path.dirname(tempFilePath));
-
-      // Write buffer to temporary file
-      await fs.writeFile(tempFilePath, file.buffer);
-
-      // Extract text from PDF
-      const dataBuffer = await fs.readFile(tempFilePath);
-      const pdfData = await pdf(dataBuffer);
-
-      // Clean up temporary file immediately for privacy
-      await fs.remove(tempFilePath);
+      
+      // Extract text directly from buffer
+      const pdfData = await pdf(file.buffer);
 
       // Check if we got meaningful text
       if (pdfData.text.trim().length < 50) {
@@ -43,6 +30,7 @@ class PDFService {
         fileId: fileId,
       };
     } catch (error) {
+      console.error('PDF processing error:', error);
       return {
         success: false,
         error: error.message,
