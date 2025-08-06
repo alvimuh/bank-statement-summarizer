@@ -1,15 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Navigation } from "@/components/navigation";
-import { ArrowRight, Shield, Zap, Brain, TrendingUp, Loader } from "lucide-react";
+import {
+  ArrowRight,
+  Shield,
+  Zap,
+  Brain,
+  TrendingUp,
+  Loader,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import heroGraphic from "@/assets/hero-graphic.png";
+import heroGraphic from "@/assets/illustration-2.webp";
+import AiIcon from "@/assets/illustration-1.webp";
+import PdfIcon from "@/assets/illustration-3.webp";
+import ChartIcon from "@/assets/illustration-4.webp";
 
 export default function Home() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const handleDemo = () => {
     setIsLoading(true);
     // Navigate to Upload page with a query parameter to indicate demo mode
@@ -18,25 +28,19 @@ export default function Home() {
 
   const benefits = [
     {
-      icon: Brain,
+      icon: AiIcon,
       title: "AI-Powered Analysis",
       description:
         "Advanced AI processes your bank statements to extract meaningful insights and categorize transactions intelligently.",
     },
     {
-      icon: TrendingUp,
+      icon: ChartIcon,
       title: "Visual Insights",
       description:
         "Beautiful charts and graphs help you understand your spending patterns and income trends at a glance.",
     },
     {
-      icon: Zap,
-      title: "Lightning Fast",
-      description:
-        "Upload your PDF and get comprehensive analysis in seconds. No more manual categorization needed.",
-    },
-    {
-      icon: Shield,
+      icon: PdfIcon,
       title: "Secure & Private",
       description:
         "Your financial data is processed securely. We don't store your personal information or banking details.",
@@ -48,16 +52,15 @@ export default function Home() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-6 py-20">
+      <section className="container max-w-6xl mx-auto px-6 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                Ubah{" "}
+                Ubah Bank Statement jadi{" "}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
-                  Bank Statements
-                </span>{" "}
-                jadi Insights
+                  Insights
+                </span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
                 Unggah file PDF dari m-banking Anda, dan dapatkan analisis
@@ -74,10 +77,10 @@ export default function Home() {
                 Start Analysis
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="text-lg px-8 py-6" 
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-lg px-8 py-6"
                 onClick={handleDemo}
                 disabled={isLoading}
               >
@@ -105,7 +108,7 @@ export default function Home() {
       </section>
 
       {/* Benefits Section */}
-      <section className="container mx-auto px-6 py-20">
+      <section className="container max-w-6xl mx-auto px-6 py-20">
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold">
             Kenapa harus{" "}
@@ -119,16 +122,18 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {benefits.map((benefit, index) => (
             <GlassCard
               key={index}
               className="p-6 hover:scale-105 transition-transform duration-300"
             >
               <div className="space-y-4">
-                <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <benefit.icon className="w-6 h-6 text-white" />
-                </div>
+                <img
+                  src={benefit.icon}
+                  alt={benefit.title}
+                  className="size-40"
+                />
                 <h3 className="text-xl font-semibold">{benefit.title}</h3>
                 <p className="text-muted-foreground leading-relaxed">
                   {benefit.description}
@@ -140,7 +145,7 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-6 py-20">
+      <section className="container max-w-6xl mx-auto px-6 py-20">
         <GlassCard className="p-12 text-center space-y-6">
           <h2 className="text-3xl lg:text-4xl font-bold">
             Ready to Get Started?
