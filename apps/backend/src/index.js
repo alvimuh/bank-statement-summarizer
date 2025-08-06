@@ -10,7 +10,7 @@ const analysisRoutes = require("./routes/analysis");
 const exportRoutes = require("./routes/export");
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3003;
 
 // Security middleware
 app.use(helmet());

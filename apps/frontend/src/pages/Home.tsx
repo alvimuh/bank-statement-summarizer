@@ -1,55 +1,67 @@
 import { Button } from "@/components/ui/button";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Navigation } from "@/components/navigation";
-import { ArrowRight, Shield, Zap, Brain, TrendingUp } from "lucide-react";
+import { ArrowRight, Shield, Zap, Brain, TrendingUp, Loader } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import heroGraphic from "@/assets/hero-graphic.png";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const handleDemo = () => {
+    setIsLoading(true);
+    // Navigate to Upload page with a query parameter to indicate demo mode
+    navigate("/upload?demo=true");
+  };
 
   const benefits = [
     {
       icon: Brain,
       title: "AI-Powered Analysis",
-      description: "Advanced AI processes your bank statements to extract meaningful insights and categorize transactions intelligently."
+      description:
+        "Advanced AI processes your bank statements to extract meaningful insights and categorize transactions intelligently.",
     },
     {
       icon: TrendingUp,
       title: "Visual Insights",
-      description: "Beautiful charts and graphs help you understand your spending patterns and income trends at a glance."
+      description:
+        "Beautiful charts and graphs help you understand your spending patterns and income trends at a glance.",
     },
     {
       icon: Zap,
       title: "Lightning Fast",
-      description: "Upload your PDF and get comprehensive analysis in seconds. No more manual categorization needed."
+      description:
+        "Upload your PDF and get comprehensive analysis in seconds. No more manual categorization needed.",
     },
     {
       icon: Shield,
       title: "Secure & Private",
-      description: "Your financial data is processed securely. We don't store your personal information or banking details."
-    }
+      description:
+        "Your financial data is processed securely. We don't store your personal information or banking details.",
+    },
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      
+
       {/* Hero Section */}
       <section className="container mx-auto px-6 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                Transform Your{" "}
+                Ubah{" "}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">
                   Bank Statements
                 </span>{" "}
-                into Insights
+                jadi Insights
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Upload your PDF bank statement and get instant AI-powered analysis with beautiful visualizations. 
-                Understand your spending patterns, track income, and make better financial decisions.
+                Unggah file PDF dari m-banking Anda, dan dapatkan analisis
+                instan berbasis AI dengan visualisasi yang menarik.
               </p>
             </div>
 
@@ -62,8 +74,21 @@ export default function Home() {
                 Start Analysis
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-                View Demo
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="text-lg px-8 py-6" 
+                onClick={handleDemo}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader className="w-5 h-5 mr-2 animate-spin" />
+                    Loading Demo...
+                  </>
+                ) : (
+                  "View Demo"
+                )}
               </Button>
             </div>
           </div>
@@ -83,13 +108,14 @@ export default function Home() {
       <section className="container mx-auto px-6 py-20">
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold">
-            Why Choose{" "}
+            Kenapa harus{" "}
             <span className="bg-gradient-primary bg-clip-text text-transparent">
-              StatementAI
+              StatementAI ?
             </span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Powerful features designed to give you complete control over your financial data
+            Pahami pola pengeluaran, pantau pendapatan, dan buat keputusan
+            keuangan yang lebih baik.
           </p>
         </div>
 
@@ -120,7 +146,8 @@ export default function Home() {
             Ready to Get Started?
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Upload your bank statement PDF and discover insights you never knew existed in your financial data.
+            Unggah file PDF bank statement Anda dan temukan insight yang belum
+            pernah Anda ketahui dalam data keuangan Anda!
           </p>
           <Button
             size="lg"

@@ -194,7 +194,7 @@ const StreamingAnalysisPage = () => {
 
       // Create new EventSource for streaming
       const response = await fetch(
-        "http://localhost:3001/api/upload/analyze-v2",
+        "http://localhost:3003/api/upload/analyze-v2",
         {
           method: "POST",
           body: formData,
@@ -276,7 +276,7 @@ const StreamingAnalysisPage = () => {
 
       // Call the mock API endpoint
       const response = await fetch(
-        "http://localhost:3001/api/upload/analyze-mock",
+        "http://localhost:3003/api/upload/analyze-mock",
         {
           method: "POST",
           signal: abortControllerRef.current.signal,

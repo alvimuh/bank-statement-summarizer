@@ -488,6 +488,7 @@ Return ONLY this exact JSON structure:
     "categoryName": {
       "total": number,
       "count": number,
+      "avgType": "credit|debit",
       "transactions": [
         {
           "date": "YYYY-MM-DD",

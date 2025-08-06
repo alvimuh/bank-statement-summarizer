@@ -1,4 +1,4 @@
-import axios from "axios";
+import api from './api';
 
 export interface AnalysisData {
   summary: {
@@ -47,29 +47,27 @@ export interface ExportOption {
 }
 
 class ExportService {
-  private baseURL = "http://localhost:3003/api/export";
-
   // Get available export options
   async getExportOptions(): Promise<ExportOption[]> {
     try {
-      const response = await axios.get(`${this.baseURL}/options`);
+      const response = await api.get('/export/options');
       return response.data.exportOptions;
     } catch (error) {
-      console.error("Failed to get export options:", error);
-      throw new Error("Failed to load export options");
+      console.error('Failed to get export options:', error);
+      throw new Error('Failed to load export options');
     }
   }
 
   // Export complete analysis to CSV
   async exportComplete(analysisData: AnalysisData): Promise<void> {
     try {
-      const response = await axios.post(
-        `${this.baseURL}/csv/complete`,
+      const response = await api.post(
+        '/export/csv/complete',
         { analysisData },
         {
-          responseType: "blob",
+          responseType: 'blob',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         }
       );
@@ -79,21 +77,21 @@ class ExportService {
         `complete_${analysisData.currency}_${this.getTimestamp()}.csv`
       );
     } catch (error) {
-      console.error("Export failed:", error);
-      throw new Error("Failed to export complete analysis");
+      console.error('Export failed:', error);
+      throw new Error('Failed to export complete analysis');
     }
   }
 
   // Export only transactions to CSV
   async exportTransactions(analysisData: AnalysisData): Promise<void> {
     try {
-      const response = await axios.post(
-        `${this.baseURL}/csv/transactions`,
+      const response = await api.post(
+        '/export/csv/transactions',
         { analysisData },
         {
-          responseType: "blob",
+          responseType: 'blob',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         }
       );
@@ -103,21 +101,21 @@ class ExportService {
         `transactions_${analysisData.currency}_${this.getTimestamp()}.csv`
       );
     } catch (error) {
-      console.error("Export failed:", error);
-      throw new Error("Failed to export transactions");
+      console.error('Export failed:', error);
+      throw new Error('Failed to export transactions');
     }
   }
 
   // Export summary to CSV
   async exportSummary(analysisData: AnalysisData): Promise<void> {
     try {
-      const response = await axios.post(
-        `${this.baseURL}/csv/summary`,
+      const response = await api.post(
+        '/export/csv/summary',
         { analysisData },
         {
-          responseType: "blob",
+          responseType: 'blob',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
         }
       );
@@ -127,15 +125,15 @@ class ExportService {
         `summary_${analysisData.currency}_${this.getTimestamp()}.csv`
       );
     } catch (error) {
-      console.error("Export failed:", error);
-      throw new Error("Failed to export summary");
+      console.error('Export failed:', error);
+      throw new Error('Failed to export summary');
     }
   }
 
   // Helper method to download file
   private downloadFile(blob: Blob, filename: string): void {
     const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
+    const link = document.createElement('a');
     link.href = url;
     link.download = filename;
     document.body.appendChild(link);
@@ -147,23 +145,23 @@ class ExportService {
   // Helper method to generate timestamp
   private getTimestamp(): string {
     const now = new Date();
-    return now.toISOString().slice(0, 19).replace(/:/g, "-");
+    return now.toISOString().slice(0, 19).replace(/:/g, '-');
   }
 
   // Export based on type
   async exportByType(type: string, analysisData: AnalysisData): Promise<void> {
     switch (type) {
-      case "complete":
+      case 'complete':
         await this.exportComplete(analysisData);
         break;
-      case "transactions":
+      case 'transactions':
         await this.exportTransactions(analysisData);
         break;
-      case "summary":
+      case 'summary':
         await this.exportSummary(analysisData);
         break;
       default:
-        throw new Error("Invalid export type");
+        throw new Error('Invalid export type');
     }
   }
 }
