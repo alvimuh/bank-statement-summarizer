@@ -1,31 +1,30 @@
-import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
 import {
-  Upload,
-  ArrowLeft,
-  FileText,
-  CheckCircle,
-  Loader,
-  Eye,
-  EyeOff,
-  Globe,
-  FileDown,
-  ChevronDown,
-  X,
-  BanknoteIcon,
-} from "lucide-react";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
   Title,
   Tooltip,
-  Legend,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
 import { format } from "date-fns";
+import {
+  ArrowLeft,
+  CheckCircle,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  FileDown,
+  FileText,
+  Globe,
+  Loader,
+  Upload,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bar } from "react-chartjs-2";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 import exportService, {
   AnalysisData,
   ExportOption,
