@@ -93,6 +93,7 @@ export default function Analysis() {
         // Check if we have data from the upload page
         if (location.state?.analysisResult) {
           setAnalysisData(location.state.analysisResult);
+          console.log("Currency:", location.state);
           if (location.state.currency) {
             setCurrency(location.state.currency);
           }
@@ -106,6 +107,7 @@ export default function Analysis() {
         // If no data in location state, try to fetch the latest analysis
         // This is a fallback in case user navigates directly to this page
         const result = await analysisService.getLatestAnalysis();
+
         if (result) {
           setAnalysisData(result);
           // Set default currency if not provided

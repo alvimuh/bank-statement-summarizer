@@ -158,11 +158,8 @@ export default function Upload() {
             state: {
               fileName: "demo_bank_statement.pdf",
               analysisResult: result,
-              currency: selectedCurrency || "USD",
-              currencySymbol: selectedCurrency
-                ? currencies[selectedCurrency as keyof typeof currencies]
-                    ?.symbol
-                : "$",
+              currency: result.currency,
+              currencySymbol: result.currencySymbol,
               isDemo: true,
             },
           });

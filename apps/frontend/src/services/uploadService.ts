@@ -1,4 +1,4 @@
-import api from './api';
+import api from "./api";
 
 export interface AnalysisResult {
   summary: {
@@ -58,17 +58,20 @@ export interface UploadOptions {
 
 class UploadService {
   // Upload PDF and get streaming analysis
-  async uploadAndAnalyze(file: File, options: UploadOptions = {}): Promise<void> {
+  async uploadAndAnalyze(
+    file: File,
+    options: UploadOptions = {}
+  ): Promise<void> {
     const formData = new FormData();
-    formData.append('file', file);
-    
+    formData.append("file", file);
+
     if (options.currency) {
-      formData.append('currency', options.currency);
+      formData.append("currency", options.currency);
     }
 
     try {
-      const response = await fetch(`${api.defaults.baseURL}/node-api`, {
-        method: 'POST',
+      const response = await fetch(`${api.defaults.baseURL}/analyze-pdf`, {
+        method: "POST",
         body: formData,
         signal: options.signal,
       });
@@ -79,37 +82,37 @@ class UploadService {
 
       const reader = response.body?.getReader();
       if (!reader) {
-        throw new Error('No response body');
+        throw new Error("No response body");
       }
 
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             try {
               const data: StreamingStatus = JSON.parse(line.slice(6));
               this.handleStreamingData(data, options);
             } catch (error) {
-              console.error('Error parsing streaming data:', error);
+              console.error("Error parsing streaming data:", error);
             }
           }
         }
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Request was cancelled');
+      if (error.name === "AbortError") {
+        console.log("Request was cancelled");
       } else {
-        console.error('Upload error:', error);
-        options.onError?.(error.message || 'Upload failed. Please try again.');
+        console.error("Upload error:", error);
+        options.onError?.(error.message || "Upload failed. Please try again.");
         throw error;
       }
     }
@@ -118,8 +121,8 @@ class UploadService {
   // Upload PDF for mock analysis (for testing)
   async uploadMockAnalysis(options: UploadOptions = {}): Promise<void> {
     try {
-      const response = await fetch(`${api.defaults.baseURL}/upload/analyze-mock`, {
-        method: 'POST',
+      const response = await fetch(`${api.defaults.baseURL}/analyze-mock`, {
+        method: "POST",
         signal: options.signal,
       });
 
@@ -129,63 +132,68 @@ class UploadService {
 
       const reader = response.body?.getReader();
       if (!reader) {
-        throw new Error('No response body');
+        throw new Error("No response body");
       }
 
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
 
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
+          if (line.startsWith("data: ")) {
             try {
               const data: StreamingStatus = JSON.parse(line.slice(6));
               this.handleStreamingData(data, options);
             } catch (error) {
-              console.error('Error parsing streaming data:', error);
+              console.error("Error parsing streaming data:", error);
             }
           }
         }
       }
     } catch (error: any) {
-      if (error.name === 'AbortError') {
-        console.log('Request was cancelled');
+      if (error.name === "AbortError") {
+        console.log("Request was cancelled");
       } else {
-        console.error('Mock analysis error:', error);
-        options.onError?.(error.message || 'Analysis failed. Please try again.');
+        console.error("Mock analysis error:", error);
+        options.onError?.(
+          error.message || "Analysis failed. Please try again."
+        );
         throw error;
       }
     }
   }
 
   // Handle streaming data from server
-  private handleStreamingData(data: StreamingStatus, options: UploadOptions): void {
-    console.log('Streaming data:', data);
-    
+  private handleStreamingData(
+    data: StreamingStatus,
+    options: UploadOptions
+  ): void {
+    console.log("Streaming data:", data);
+
     switch (data.type) {
-      case 'status':
+      case "status":
         if (data.message) {
           options.onStatus?.(data.message);
         }
         break;
-      case 'analysis_chunk':
+      case "analysis_chunk":
         if (data.content) {
           options.onAnalysisChunk?.(data.content);
         }
         break;
-      case 'complete':
+      case "complete":
         if (data.data) {
           options.onComplete?.(data.data);
         }
         break;
-      case 'error':
+      case "error":
         if (data.message) {
           options.onError?.(data.message);
         }
@@ -196,34 +204,36 @@ class UploadService {
   // Simple upload without streaming (for basic analysis)
   async uploadFile(file: File, currency?: string): Promise<AnalysisResult> {
     const formData = new FormData();
-    formData.append('file', file);
-    
+    formData.append("file", file);
+
     if (currency) {
-      formData.append('currency', currency);
+      formData.append("currency", currency);
     }
 
     try {
-      const response = await api.post('/upload/analyze', formData, {
+      const response = await api.post("/upload/analyze", formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
         timeout: 120000, // 2 minutes
       });
 
       return response.data;
     } catch (error: any) {
-      console.error('Upload error:', error);
-      throw new Error(error.response?.data?.message || 'Upload failed. Please try again.');
+      console.error("Upload error:", error);
+      throw new Error(
+        error.response?.data?.message || "Upload failed. Please try again."
+      );
     }
   }
 
   // Health check
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await api.get('/health');
+      const response = await api.get("/health");
       return response.status === 200;
     } catch (error) {
-      console.error('Health check failed:', error);
+      console.error("Health check failed:", error);
       return false;
     }
   }
