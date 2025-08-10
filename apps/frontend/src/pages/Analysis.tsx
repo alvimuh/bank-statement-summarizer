@@ -5,6 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   TrendingUp,
   TrendingDown,
   DollarSign,
@@ -44,6 +51,24 @@ const COLORS = [
   "#6366f1",
   "#f43f5e",
 ];
+
+// Currency symbols mapping
+const currencySymbols: Record<string, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  JPY: "¥",
+  IDR: "Rp",
+  INR: "₹",
+  KRW: "₩",
+  ILS: "₪",
+  CHF: "CHF",
+  SGD: "S$",
+  HKD: "HK$",
+  NZD: "NZ$",
+  CAD: "C$",
+  AUD: "A$",
+};
 
 // Helper function to process category data for charts
 const processCategoryData = (data: any, type: "income" | "expense") => {
@@ -86,6 +111,12 @@ export default function Analysis() {
 
   const fileName = location.state?.fileName || "bank-statement.pdf";
 
+  // Handle currency change
+  const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
+    setCurrencySymbol(currencySymbols[newCurrency] || newCurrency);
+  };
+
   // Process data from location state or fetch from API
   useEffect(() => {
     const fetchData = async () => {
@@ -93,7 +124,6 @@ export default function Analysis() {
         // Check if we have data from the upload page
         if (location.state?.analysisResult) {
           setAnalysisData(location.state.analysisResult);
-          console.log("Currency:", location.state);
           if (location.state.currency) {
             setCurrency(location.state.currency);
           }
@@ -117,23 +147,6 @@ export default function Analysis() {
           if (result.currencySymbol) {
             setCurrencySymbol(result.currencySymbol);
           } else {
-            // Default currency symbols based on common currencies
-            const currencySymbols: Record<string, string> = {
-              USD: "$",
-              EUR: "€",
-              GBP: "£",
-              JPY: "¥",
-              IDR: "Rp",
-              INR: "₹",
-              KRW: "₩",
-              ILS: "₪",
-              CHF: "CHF",
-              SGD: "S$",
-              HKD: "HK$",
-              NZD: "NZ$",
-              CAD: "C$",
-              AUD: "A$",
-            };
             setCurrencySymbol(
               currencySymbols[result.currency] || result.currency
             );
@@ -280,43 +293,62 @@ export default function Analysis() {
               <h1 className="text-3xl font-bold">Financial Analysis</h1>
               <p className="text-muted-foreground">Analysis for {fileName}</p>
             </div>
-            <div className="flex space-x-2">
-              <div className="relative group">
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Report
-                </Button>
-                <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-10">
-                  <div className="py-1">
-                    <button
-                      onClick={() => handleExport("complete")}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
-                    >
-                      Complete Analysis
-                    </button>
-                    <button
-                      onClick={() => handleExport("transactions")}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
-                    >
-                      Transactions Only
-                    </button>
-                    <button
-                      onClick={() => handleExport("summary")}
-                      className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
-                    >
-                      Summary Only
-                    </button>
+            <div className="flex items-center space-x-4">
+              {/* Currency Selector */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-muted-foreground">Currency:</span>
+                <Select value={currency} onValueChange={handleCurrencyChange}>
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(currencySymbols).map(([code, symbol]) => (
+                      <SelectItem key={code} value={code}>
+                        {symbol} {code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex space-x-2">
+                <div className="relative group">
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export Report
+                  </Button>
+                  <div className="absolute right-0 mt-2 w-48 bg-card border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-10">
+                    <div className="py-1">
+                      <button
+                        onClick={() => handleExport("complete")}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Complete Analysis
+                      </button>
+                      <button
+                        onClick={() => handleExport("transactions")}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Transactions Only
+                      </button>
+                      <button
+                        onClick={() => handleExport("summary")}
+                        className="block w-full text-left px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Summary Only
+                      </button>
+                    </div>
                   </div>
                 </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/upload")}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  New Analysis
+                </Button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate("/upload")}
-              >
-                <FileText className="w-4 h-4 mr-2" />
-                New Analysis
-              </Button>
             </div>
           </div>
         </div>

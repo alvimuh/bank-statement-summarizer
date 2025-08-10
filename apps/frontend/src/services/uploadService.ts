@@ -101,17 +101,13 @@ class UploadService {
             try {
               const data: StreamingStatus = JSON.parse(line.slice(6));
               this.handleStreamingData(data, options);
-            } catch (error) {
-              console.error("Error parsing streaming data:", error);
-            }
+            } catch (error) {}
           }
         }
       }
     } catch (error: any) {
       if (error.name === "AbortError") {
-        console.log("Request was cancelled");
       } else {
-        console.error("Upload error:", error);
         options.onError?.(error.message || "Upload failed. Please try again.");
         throw error;
       }
@@ -151,22 +147,12 @@ class UploadService {
             try {
               const data: StreamingStatus = JSON.parse(line.slice(6));
               this.handleStreamingData(data, options);
-            } catch (error) {
-              console.error("Error parsing streaming data:", error);
-            }
+            } catch (error) {}
           }
         }
       }
     } catch (error: any) {
-      if (error.name === "AbortError") {
-        console.log("Request was cancelled");
-      } else {
-        console.error("Mock analysis error:", error);
-        options.onError?.(
-          error.message || "Analysis failed. Please try again."
-        );
-        throw error;
-      }
+      throw error;
     }
   }
 
@@ -175,8 +161,6 @@ class UploadService {
     data: StreamingStatus,
     options: UploadOptions
   ): void {
-    console.log("Streaming data:", data);
-
     switch (data.type) {
       case "status":
         if (data.message) {

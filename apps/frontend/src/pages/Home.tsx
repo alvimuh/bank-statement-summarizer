@@ -1,20 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { GlassCard } from "@/components/ui/glass-card";
-import { Navigation } from "@/components/navigation";
-import {
-  ArrowRight,
-  Shield,
-  Zap,
-  Brain,
-  TrendingUp,
-  Loader,
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import heroGraphic from "@/assets/illustration-2.webp";
 import AiIcon from "@/assets/illustration-1.webp";
 import PdfIcon from "@/assets/illustration-3.webp";
 import ChartIcon from "@/assets/illustration-4.webp";
+import HeroImg from "@/assets/illustration-5.webp";
+import { Navigation } from "@/components/navigation";
+import { Button } from "@/components/ui/button";
+import { GlassCard } from "@/components/ui/glass-card";
+import { ArrowRight, Loader } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
   // No mouse movement tracking needed for static spotlight
@@ -51,18 +44,18 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="h-screen absolute w-full">
-        <div className="absolute inset-0 bg-gradient-primary size-[500px] md:size-[800px] -top-[20%] md:-top-[40%] blur-3xl md:blur-[200px] left-1/2 -translate-x-1/2 opacity-20 rounded-full"></div>
+        <div className="absolute inset-0 bg-gradient-primary size-[500px] md:size-[800px] -top-[20%] md:-top-[40%] blur-3xl md:blur-[200px] left-1/2 -translate-x-1/2 opacity-30 rounded-full"></div>
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:60px_60px]"></div>
         <div className="w-full h-60 bg-gradient-to-t from-background absolute bottom-0" />
       </div>
+
+      <Navigation />
 
       {/* Hero Section */}
       <section className="container max-w-6xl mx-auto px-6">
         {/* Background Grid with animation */}
 
-        {/* <div className="h-72 bg-background absolute bottom-0 left-0" /> */}
         <div className="grid lg:grid-cols-2 gap-12 items-center relative">
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
@@ -108,17 +101,18 @@ export default function Home() {
 
           <div className="relative animate-float">
             <img
-              src={heroGraphic}
+              src={HeroImg}
               alt="Financial Dashboard"
               className="relative z-10 w-full max-w-lg mx-auto drop-shadow-2xl"
             />
+            <div className="bg-background/50 size-60 absolute -bottom-10 rounded-full blur-3xl left-1/2 -translate-x-1/2" />
           </div>
         </div>
       </section>
 
       {/* Benefits Section */}
       <section className="container max-w-6xl mx-auto px-6 py-20">
-        <div className="text-center space-y-4 mb-16">
+        <div className="text-center space-y-4 mb-16 relative">
           <h2 className="text-3xl lg:text-4xl font-bold">
             Kenapa harus{" "}
             <span className="bg-gradient-primary bg-clip-text text-transparent">

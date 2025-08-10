@@ -232,11 +232,8 @@ export default function Upload() {
             state: {
               fileName: file.name,
               analysisResult: result,
-              currency: selectedCurrency || "USD",
-              currencySymbol: selectedCurrency
-                ? currencies[selectedCurrency as keyof typeof currencies]
-                    ?.symbol
-                : "$",
+              currency: result.currency,
+              currencySymbol: result.currencySymbol,
             },
           });
         },
@@ -497,9 +494,8 @@ export default function Upload() {
               <div className="space-y-1">
                 <h4 className="font-semibold">Your data is secure</h4>
                 <p className="text-sm text-muted-foreground">
-                  We process your bank statement locally and don't store any
-                  personal financial information. Your privacy and security are
-                  our top priorities.
+                  We don't store any personal financial information. Your
+                  privacy and security are our top priorities.
                 </p>
               </div>
             </div>
