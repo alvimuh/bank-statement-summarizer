@@ -29,6 +29,10 @@ class AIService {
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
+      
+      // Generate chart data (separate income and expense charts)
+      const chartData = await this.generateIncomeExpenseCharts(analysis);
+      analysis.chartData = chartData;
 
       return analysis;
     } catch (error) {
@@ -89,6 +93,10 @@ class AIService {
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
+      
+      // Generate chart data (separate income and expense charts)
+      const chartData = await this.generateIncomeExpenseCharts(analysis);
+      analysis.chartData = chartData;
 
       return analysis;
     } catch (error) {
@@ -488,7 +496,6 @@ Return ONLY this exact JSON structure:
     "categoryName": {
       "total": number,
       "count": number,
-      "avgType": "credit|debit",
       "transactions": [
         {
           "date": "YYYY-MM-DD",

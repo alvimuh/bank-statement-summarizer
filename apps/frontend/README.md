@@ -1,8 +1,16 @@
-# Welcome to your Lovable project
+# Bank Statement Summarizer Frontend
 
-## Project info
+This is the frontend application for the Bank Statement Summarizer. It provides a user interface for uploading bank statements, viewing analysis results, and exporting data.
 
-**URL**: https://lovable.dev/projects/6766ffba-2839-4443-895d-ed3e2c84439f
+## Features
+
+- PDF bank statement upload
+- Real-time analysis progress streaming
+- Interactive financial dashboard
+- Transaction categorization
+- Data visualization with charts
+- Export functionality (CSV)
+- Demo mode for testing
 
 ## How can I edit this code?
 
@@ -48,6 +56,24 @@ npm run dev
 - Click on the "Code" button (green button) near the top right.
 - Select the "Codespaces" tab.
 - Click on "New codespace" to launch a new Codespace environment.
+
+## Environment Variables
+
+Create a `.env.local` file with the following variables:
+
+```
+VITE_API_URL=http://localhost:3003/api
+```
+
+## Deployment
+
+### Netlify Deployment
+
+This frontend can be deployed to Netlify. See [NETLIFY_DEPLOYMENT.md](./NETLIFY_DEPLOYMENT.md) for detailed instructions.
+
+### Backend Integration
+
+This frontend is designed to work with the Bank Statement Summarizer backend API. Make sure to update the `VITE_API_URL` environment variable to point to your deployed backend.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## What technologies are used for this project?

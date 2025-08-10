@@ -53,9 +53,6 @@ class UploadController {
         userCurrency
       );
 
-      // Generate chart data (separate income and expense charts)
-      const chartData = await aiService.generateIncomeExpenseCharts(analysis);
-
       // Return comprehensive analysis
       res.json({
         success: true,
@@ -64,7 +61,7 @@ class UploadController {
           summary: analysis.summary,
           categories: analysis.categories,
           allTransactions: analysis.allTransactions,
-          chartData: chartData,
+          chartData: analysis.chartData,
           currency: analysis.currency,
           processingInfo: {
             pages: pdfResult.pages,
@@ -176,18 +173,7 @@ class UploadController {
       res.write(
         `data: ${JSON.stringify({
           type: "status",
-          message: "Analysis completed. Generating charts...",
-        })}\n\n`
-      );
-      res.flush();
-
-      // Generate chart data
-      const chartData = await aiService.generateIncomeExpenseCharts(analysis);
-
-      res.write(
-        `data: ${JSON.stringify({
-          type: "status",
-          message: "Charts generated successfully. Finalizing results...",
+          message: "Analysis completed. Finalizing results...",
         })}\n\n`
       );
       res.flush();
@@ -199,7 +185,7 @@ class UploadController {
           summary: analysis.summary,
           categories: analysis.categories,
           allTransactions: analysis.allTransactions,
-          chartData: chartData,
+          chartData: analysis.chartData,
           currency: analysis.currency,
           processingInfo: {
             pages: pdfResult.pages,
@@ -323,13 +309,7 @@ class UploadController {
 
       sendChunk({
         type: "status",
-        message: "Analysis completed. Generating charts...",
-      });
-      await UploadController.delay(700);
-
-      sendChunk({
-        type: "status",
-        message: "Charts generated successfully. Finalizing results...",
+        message: "Analysis completed. Finalizing results...",
       });
       await UploadController.delay(500);
 

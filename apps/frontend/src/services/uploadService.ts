@@ -60,14 +60,14 @@ class UploadService {
   // Upload PDF and get streaming analysis
   async uploadAndAnalyze(file: File, options: UploadOptions = {}): Promise<void> {
     const formData = new FormData();
-    formData.append('pdf', file);
+    formData.append('file', file);
     
     if (options.currency) {
       formData.append('currency', options.currency);
     }
 
     try {
-      const response = await fetch(`${api.defaults.baseURL}/upload/analyze-v2`, {
+      const response = await fetch(`${api.defaults.baseURL}/node-api`, {
         method: 'POST',
         body: formData,
         signal: options.signal,
@@ -196,7 +196,7 @@ class UploadService {
   // Simple upload without streaming (for basic analysis)
   async uploadFile(file: File, currency?: string): Promise<AnalysisResult> {
     const formData = new FormData();
-    formData.append('pdf', file);
+    formData.append('file', file);
     
     if (currency) {
       formData.append('currency', currency);
