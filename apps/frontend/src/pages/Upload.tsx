@@ -418,16 +418,9 @@ export default function Upload() {
                 {analysisChunks.length > 0 && (
                   <div className="p-3 bg-muted rounded-md">
                     <h4 className="text-sm font-medium mb-2">
-                      Starting Analysis with AI:
+                      Analysis with AI:
                     </h4>
-                    {isAnalyzing && (
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Loader className="w-4 h-4 animate-spin text-primary" />
-                        <span className="text-xs text-primary">
-                          Analyzing...
-                        </span>
-                      </div>
-                    )}
+
                     <div
                       className="text-xs text-muted-foreground max-h-24 overflow-y-auto whitespace-pre-line"
                       ref={(el) => {
@@ -435,6 +428,14 @@ export default function Upload() {
                       }}
                     >
                       {analysisChunks.join("\n\n")}
+                      {isAnalyzing && (
+                        <div className="flex items-center space-x-2 mt-3">
+                          <Loader className="w-4 h-4 animate-spin text-primary" />
+                          <span className="text-xs text-primary">
+                            Analyzing...
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

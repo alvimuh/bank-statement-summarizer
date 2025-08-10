@@ -10,13 +10,15 @@ import {
   Loader,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import heroGraphic from "@/assets/illustration-2.webp";
 import AiIcon from "@/assets/illustration-1.webp";
 import PdfIcon from "@/assets/illustration-3.webp";
 import ChartIcon from "@/assets/illustration-4.webp";
 
 export default function Home() {
+  // No mouse movement tracking needed for static spotlight
+
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -50,10 +52,18 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
+      <div className="h-screen absolute w-full">
+        <div className="absolute inset-0 bg-gradient-primary size-[500px] md:size-[800px] -top-[20%] md:-top-[40%] blur-3xl md:blur-[200px] left-1/2 -translate-x-1/2 opacity-20 rounded-full"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+        <div className="w-full h-60 bg-gradient-to-t from-background absolute bottom-0" />
+      </div>
 
       {/* Hero Section */}
-      <section className="container max-w-6xl mx-auto px-6 py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section className="container max-w-6xl mx-auto px-6">
+        {/* Background Grid with animation */}
+
+        {/* <div className="h-72 bg-background absolute bottom-0 left-0" /> */}
+        <div className="grid lg:grid-cols-2 gap-12 items-center relative">
           <div className="space-y-8 animate-fade-in">
             <div className="space-y-4">
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
@@ -97,7 +107,6 @@ export default function Home() {
           </div>
 
           <div className="relative animate-float">
-            <div className="absolute inset-0 bg-gradient-primary opacity-20 blur-3xl rounded-full"></div>
             <img
               src={heroGraphic}
               alt="Financial Dashboard"
