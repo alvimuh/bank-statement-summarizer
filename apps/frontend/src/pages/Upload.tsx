@@ -410,14 +410,6 @@ export default function Upload() {
                           {message}
                         </p>
                       ))}
-                      {isAnalyzing && (
-                        <div className="flex items-center space-x-2">
-                          <Loader className="w-4 h-4 animate-spin text-primary" />
-                          <span className="text-xs text-primary">
-                            Analyzing...
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
@@ -428,7 +420,20 @@ export default function Upload() {
                     <h4 className="text-sm font-medium mb-2">
                       Starting Analysis with AI:
                     </h4>
-                    <div className="text-xs text-muted-foreground max-h-24 overflow-y-auto whitespace-pre-line">
+                    {isAnalyzing && (
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Loader className="w-4 h-4 animate-spin text-primary" />
+                        <span className="text-xs text-primary">
+                          Analyzing...
+                        </span>
+                      </div>
+                    )}
+                    <div
+                      className="text-xs text-muted-foreground max-h-24 overflow-y-auto whitespace-pre-line"
+                      ref={(el) => {
+                        if (el) el.scrollTop = el.scrollHeight;
+                      }}
+                    >
                       {analysisChunks.join("\n\n")}
                     </div>
                   </div>

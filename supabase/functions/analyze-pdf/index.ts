@@ -94,7 +94,7 @@ class AIService {
         userCurrency || (await this.detectCurrency(text));
 
       if (onChunk) {
-        onChunk(`Detected currency: ${detectedCurrency}`);
+        onChunk(`✅ Detected currency: ${detectedCurrency}`);
       }
 
       console.log({ detectedCurrency, text });
@@ -108,6 +108,7 @@ class AIService {
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
+      analysis.currencySymbol = this.getCurrencySymbol(detectedCurrency);
 
       // Generate chart data (separate income and expense charts)
       const chartData = await this.generateIncomeExpenseCharts(analysis);
@@ -124,7 +125,7 @@ class AIService {
       ) {
         console.log("Gemini quota exceeded, using fallback mode...");
         if (onChunk) {
-          onChunk("Using fallback analysis due to API quota limits...");
+          onChunk("⛔️ Using fallback analysis due to API quota limits...");
         }
         return this.generateFallbackAnalysis(text, userCurrency);
       } else if (error.message.includes("API key")) {
@@ -160,6 +161,27 @@ class AIService {
     // Default to USD if no currency is detected
     console.log("No currency detected, defaulting to USD");
     return "USD";
+  }
+
+  getCurrencySymbol(currency) {
+    const symbols = {
+      IDR: "Rp",
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      JPY: "¥",
+      CAD: "C$",
+      AUD: "A$",
+      INR: "₹",
+      RUB: "₽",
+      KRW: "₩",
+      ILS: "₪",
+      CHF: "CHF",
+      SGD: "S$",
+      HKD: "HK$",
+      NZD: "NZ$",
+    };
+    return symbols[currency] || currency;
   }
 
   // Generate structured analysis using streaming
@@ -209,7 +231,6 @@ class AIService {
 
       console.log("AI response complete, parsing JSON...");
 
-      console.log({ fullResponse });
       // Extract JSON from the response
       let jsonText = this.extractJsonFromText(fullResponse);
       console.log("Extracted JSON text length:", jsonText.length);
@@ -503,18 +524,24 @@ async function handleAnalyzePdf(req: Request) {
 
         try {
           // Send initial status
-          sendChunk({ type: "status", message: "Starting PDF processing..." });
+          sendChunk({
+            type: "status",
+            message: "✅ Starting PDF processing...",
+          });
           await delay(500);
 
           // Process PDF and extract text
-          sendChunk({ type: "status", message: "Extracting text from PDF..." });
+          sendChunk({
+            type: "status",
+            message: "✅ Extracting text from PDF...",
+          });
           const pdfResult = await pdfService.processPDF(file);
 
           if (!pdfResult.success) {
             sendChunk({
               type: "error",
               message:
-                "Failed to process PDF. Please ensure the file is a valid PDF.",
+                "⛔️ Failed to process PDF. Please ensure the file is a valid PDF.",
             });
             controller.close();
             return;
@@ -522,12 +549,12 @@ async function handleAnalyzePdf(req: Request) {
 
           sendChunk({
             type: "status",
-            message: `PDF processed successfully. Found ${pdfResult.pages} pages and extracted ${pdfResult.text.length} characters.`,
+            message: `✅ PDF processed successfully. Found ${pdfResult.pages} pages and extracted ${pdfResult.text.length} characters.`,
           });
           await delay(500);
 
           // Analyze with AI using streaming
-          sendChunk({ type: "status", message: "Starting AI analysis..." });
+          sendChunk({ type: "status", message: "✅ Starting AI analysis..." });
 
           const analysis = await aiService.analyzeBankStatementStreaming(
             pdfResult.text,
@@ -542,7 +569,7 @@ async function handleAnalyzePdf(req: Request) {
 
           sendChunk({
             type: "status",
-            message: "Analysis completed. Finalizing results...",
+            message: "✅ Analysis completed. Finalizing results...",
           });
           await delay(500);
 
@@ -550,11 +577,12 @@ async function handleAnalyzePdf(req: Request) {
           const finalResult = {
             type: "complete",
             data: {
+              currency: analysis.currency,
+              currencySymbol: analysis.currencySymbol,
               summary: analysis.summary,
               categories: analysis.categories,
               allTransactions: analysis.allTransactions,
               chartData: analysis.chartData,
-              currency: analysis.currency,
               processingInfo: {
                 pages: pdfResult.pages,
                 fileId: pdfResult.fileId,
@@ -570,18 +598,18 @@ async function handleAnalyzePdf(req: Request) {
           console.error("Streaming analysis error:", error);
 
           // Send more specific error messages
-          let errorMessage = "Analysis failed. Please try again.";
+          let errorMessage = "⛔️ Analysis failed. Please try again.";
 
           if (error.message.includes("quota")) {
-            errorMessage = "API quota exceeded. Please try again later.";
+            errorMessage = "⛔️ API quota exceeded. Please try again later.";
           } else if (error.message.includes("rate limit")) {
             errorMessage =
-              "Rate limit exceeded. Please wait a moment and try again.";
+              "⛔️ Rate limit exceeded. Please wait a moment and try again.";
           } else if (error.message.includes("PDF")) {
             errorMessage =
-              "PDF processing failed. Please ensure the file is a valid PDF.";
+              "⛔️ PDF processing failed. Please ensure the file is a valid PDF.";
           } else if (error.message.includes("AI")) {
-            errorMessage = "AI analysis failed. Please try again.";
+            errorMessage = "⛔️ AI analysis failed. Please try again.";
           }
 
           sendChunk({ type: "error", message: errorMessage });

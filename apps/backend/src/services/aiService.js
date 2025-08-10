@@ -29,7 +29,7 @@ class AIService {
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
-      
+
       // Generate chart data (separate income and expense charts)
       const chartData = await this.generateIncomeExpenseCharts(analysis);
       analysis.chartData = chartData;
@@ -93,7 +93,7 @@ class AIService {
 
       // Add currency information to the analysis
       analysis.currency = detectedCurrency;
-      
+
       // Generate chart data (separate income and expense charts)
       const chartData = await this.generateIncomeExpenseCharts(analysis);
       analysis.chartData = chartData;
@@ -716,6 +716,7 @@ ${text}
   // Get currency symbol for formatting
   getCurrencySymbol(currency) {
     const symbols = {
+      IDR: "Rp",
       USD: "$",
       EUR: "€",
       GBP: "£",

@@ -3,41 +3,46 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
-console.log("Hello from Functions!")
+console.log("Hello from Functions!");
 
 // Helper function for delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Serve function without JWT verification
 Deno.serve(async (req) => {
   console.log("Processing mock streaming request");
-  
+
   // Create a stream for SSE
   const stream = new ReadableStream({
     async start(controller) {
       // Helper function to send chunks
       const sendChunk = (data: any) => {
-        controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`));
+        controller.enqueue(
+          new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`)
+        );
       };
-      
+
       try {
         // Initial status
-        sendChunk({ type: "status", message: "Starting PDF processing..." });
+        sendChunk({ type: "status", message: "✅ Starting PDF processing..." });
         await delay(500);
 
-        sendChunk({ type: "status", message: "Extracting text from PDF..." });
+        sendChunk({
+          type: "status",
+          message: "✅ Extracting text from PDF...",
+        });
         await delay(1000);
 
         sendChunk({
           type: "status",
           message:
-            "PDF processed successfully. Found 7 pages and extracted 33006 characters.",
+            "✅ PDF processed successfully. Found 7 pages and extracted 33006 characters.",
         });
         await delay(800);
 
-        sendChunk({ type: "status", message: "Starting AI analysis..." });
+        sendChunk({ type: "status", message: "✅ Starting AI analysis..." });
         await delay(600);
 
         // Simulate AI thinking process
@@ -63,7 +68,7 @@ Deno.serve(async (req) => {
 
         sendChunk({
           type: "status",
-          message: "Analysis completed. Finalizing results...",
+          message: "✅ Analysis completed. Finalizing results...",
         });
         await delay(500);
 
@@ -385,13 +390,13 @@ Deno.serve(async (req) => {
       }
     },
   });
-  
+
   // Return the response with appropriate headers for SSE
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
       "Access-Control-Allow-Origin": "*",
     },
   });
